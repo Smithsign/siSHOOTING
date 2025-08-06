@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Shooting Animation</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #222;
+        }
+
+        #man {
+            position: absolute;
+            left: 100px;
+            bottom: 50px;
+            width: 80px;
+            height: 150px;
+            background: #3498db;
+            border-radius: 10px;
+        }
+
+        #gun {
+            position: absolute;
+            left: 160px;
+            bottom: 100px;
+            width: 60px;
+            height: 20px;
+            background: #333;
+            transform: rotate(0deg);
+            transform-origin: left center;
+        }
+
+        .bullet {
+            position: absolute;
+            width: 25px;
+            height: 5px;
+            background: orange;
+            transform: translateX(-50%) translateY(-50%);
+            border-radius: 2px;
+        }
+
+        .flash {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            background: white;
+            border-radius: 50%;
+            transform: translateX(-50%) translateY(-50%);
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="man"></div>
+    <div id="gun"></div>
+
+    <script>
+        const gun = document.getElementById('gun');
+        const body = document.body;
+        let isShooting = false;
+
+        // Rotate gun toward mouse
+        document.addEventListener('mousemove', (e) => {
+            const gunRect = gun.getBoundingClientRect();
+            const gunX = gunRect.left + gunRect.width / 2;
+            const gunY = gunRect.top + gunRect.height / 2;
+            
+            const angle = Math.atan2(e.clientY - gunY, e.clientX - gunX) * (180 / Math.PI);
+            gun.style.transform = `rotate(${angle}deg)`;
+        });
+
+        // Shoot on click
+        document.addEventListener('click', (e) => {
+            if (isShooting) return;
+            isShooting = true;
+
+            const gunRect = gun.getBoundingClientRect();
+            const startX = gunRect.right;
+            const startY = gunRect.top + gunRect.height / 2;
+
+            // Create bullet
+            const bullet = document.createElement('div');
+            bullet.className = 'bullet';
+            bullet.style.left = `${startX}px`;
+            bullet.style.top = `${startY}px`;
+            body.appendChild(bullet);
+
+            // Create muzzle flash
+            const flash = document.createElement('div');
+            flash.className = 'flash';
+            flash.style.left = `${startX}px`;
+            flash.style.top = `${startY}px`;
+            body.appendChild(flash);
+
+            // Animate flash
+            flash.style.opacity = '0.8';
+            setTimeout(() => {
+                flash.style.opacity = '0';
+                setTimeout(() => flash.remove(), 200);
+            }, 50);
+
+            // Animate bullet
+            const distance = 1000;
+            const duration = 500; // ms
+            const startTime = performance.now();
+
+            function animateBullet(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const newX = startX + progress * distance * Math.cos(Math.atan2(e.clientY - startY, e.clientX - startX));
+                const newY = startY + progress * distance * Math.sin(Math.atan2(e.clientY - startY, e.clientX - startX));
+
+                bullet.style.left = `${newX}px`;
+                bullet.style.top = `${newY}px`;
+
+                if (progress < 1) {
+                    requestAnimationFrame(animateBullet);
+                } else {
+                    bullet.remove();
+                    isShooting = false;
+                }
+            }
+
+            requestAnimationFrame(animateBullet);
+        });
+    </script>
+</body>
+</html>
